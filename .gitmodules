@@ -1,0 +1,4 @@
+[submodule "mom6"]
+	path = remapping/mom6
+	url = https://github.com/NOAA-GFDL/MOM6.git
+	branch = dev/master
