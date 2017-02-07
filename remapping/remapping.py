@@ -1,4 +1,4 @@
-import _remapping
+from . import _remapping
 import f90wrap.runtime
 import logging
 
