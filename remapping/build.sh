@@ -9,7 +9,7 @@ sed -e 's/private//g' mom6/src/ALE/MOM_remapping.F90 > MOM_remapping.F90
 # we've hardcoded the source files in an order that satisfies dependencies
 # ideally we'd use a proper build system (ninja, make)
 # but hopefully we don't touch the actual remapping core
-files="MOM_error_handler.F90 MOM_string_functions.F90 mom6/src/ALE/regrid_solvers.F90 mom6/src/ALE/polynomial_functions.F90 mom6/src/ALE/regrid_edge_slopes.F90 mom6/src/ALE/regrid_edge_values.F90 mom6/src/ALE/PCM_functions.F90 mom6/src/ALE/PLM_functions.F90 mom6/src/ALE/PPM_functions.F90 mom6/src/ALE/PQM_functions.F90 MOM_remapping.F90"
+files="MOM_error_handler.F90 mom6/src/framework/MOM_string_functions.F90 mom6/src/ALE/regrid_solvers.F90 mom6/src/ALE/polynomial_functions.F90 mom6/src/ALE/regrid_edge_slopes.F90 mom6/src/ALE/regrid_edge_values.F90 mom6/src/ALE/PCM_functions.F90 mom6/src/ALE/PLM_functions.F90 mom6/src/ALE/PPM_functions.F90 mom6/src/ALE/PQM_functions.F90 MOM_remapping.F90"
 fflags="-fcray-pointer -fdefault-double-8 -fdefault-real-8 -Waliasing -ffree-line-length-none -fno-range-check -O3 -fPIC"
 gfortran ${fflags} -I. -c ${files}
 
