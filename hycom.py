@@ -213,9 +213,9 @@ def hycom(h, sa, ct, targ_dens, dz_75, max_int_depth, max_lay_thick):
                                z_bnd[:-2,:] + max_lay_thick[:-1,np.newaxis])
 
     # adjust nominal positions (transition pressure) based on salinity
-    # scale by difference from 34
+    # scale by difference from some middle salinity
     z_nom_s = z_nom.copy()
-    z_nom_s[1:-1,:] *= 1 - np.minimum(((sa[1:,:] + sa[:-1,:]) / 2 - 34.8), 0.3)
+    z_nom_s[1:-1,:] *= 1 - np.minimum(((sa[1:,:] + sa[:-1,:]) / 2 - 34.8) ** 2, 0.8)
 
     # enforce minimum dz
     for k in range(1, z_nom_s.shape[0] - 1):
