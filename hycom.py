@@ -201,6 +201,9 @@ def hycom(h, sa, ct, targ_dens, dz_75, max_int_depth, max_lay_thick):
 
     # adjust new positions according to nominal depths
     z_nom = np.insert(dz_75.cumsum(), 0, 0)[:,np.newaxis]
+    z_nom = np.tile(z_nom, (1, h.shape[1]))
+
+    # regular hycom algorithm
     z_bnd = np.maximum(z_new, z_nom)
     # also bound by total depth
     z_bnd = np.minimum(z_bnd, z[[-1],:])
@@ -209,4 +212,20 @@ def hycom(h, sa, ct, targ_dens, dz_75, max_int_depth, max_lay_thick):
     z_bnd[1:-1,:] = np.minimum(z_bnd[1:-1,:], max_int_depth[1:-1,np.newaxis],
                                z_bnd[:-2,:] + max_lay_thick[:-1,np.newaxis])
 
-    return z_new, z_bnd
+    # adjust nominal positions (transition pressure) based on salinity
+    # scale by difference from 34
+    z_nom_s = z_nom.copy()
+    z_nom_s[1:-1,:] *= 1 - np.minimum(((sa[1:,:] + sa[:-1,:]) / 2 - 34.8), 0.3)
+
+    # enforce minimum dz
+    for k in range(1, z_nom_s.shape[0] - 1):
+        z_nom_s[k,:] = np.maximum(z_nom_s[k,:], z_nom_s[k-1,:] + 2)
+    z_bnd_s = np.maximum(z_new, z_nom_s)
+    # also bound by total depth
+    z_bnd_s = np.minimum(z_bnd_s, z[[-1],:])
+
+    # also also bound by maximum depth and thickness
+    z_bnd_s[1:-1,:] = np.minimum(z_bnd_s[1:-1,:], max_int_depth[1:-1,np.newaxis],
+                               z_bnd_s[:-2,:] + max_lay_thick[:-1,np.newaxis])
+
+    return z_new, z_bnd, z_bnd_s
