@@ -7,7 +7,8 @@ max_iter = 8
 max_tol = 1e-12
 eps = 1e-6
 
-def hycom(h, sa, ct, targ_dens, dz_75, max_int_depth, max_lay_thick):
+def hycom(h, sa, ct, targ_dens, dz_75, max_int_depth, max_lay_thick,
+          s_rule=False, s_rule_alt=False, s_topo=False, detangle=False):
     """
     Build a HyCOM1 grid from thicknesses h, absolute salinity sa
     and conservative temperature ct.
@@ -223,16 +224,36 @@ def hycom(h, sa, ct, targ_dens, dz_75, max_int_depth, max_lay_thick):
     for k in range(1, z_nom_s.shape[0] - 1):
         z_nom_s[k,:] = np.maximum(z_nom_s[k,:], z_nom_s[k-1,:] + 2)
 
-    # actual transition to nominal depth
-    #z_bnd_s = np.maximum(z_new, z_nom_s)
+    z_bnd_s = z_bnd.copy()
 
-    # alternate transition:
-    # use non-modified positions for z when interface is too shallow
-    # (we just want to be isopycnal for longer)
-    z_bnd_s = np.where(z_new < z_nom_s, z_nom, z_new)
+    # actual transition to nominal depth
+    if s_rule:
+        z_bnd_s = np.maximum(z_new, z_nom_s)
+
+    if s_rule_alt:
+        # alternate transition:
+        # use non-modified positions for z when interface is too shallow
+        # (we just want to be isopycnal for longer)
+        z_bnd_s = np.where(z_new < z_nom_s, z_nom, z_new)
+
+    if s_topo:
+        # record the bottom interface of all layers
+        z_shift = z_new.copy()
+        z_shift[:-1,:] = z_new[1:,:]
+
+        # transition to z when an isopycnal is shallower than its nominal depth
+        # and, if this column is shallower than 500m, the bottom of the layer is
+        # in the top 80% of the water column
+        z_bnd_s = np.where((z_new < z_nom) & ((z_shift < 0.8 * z[-1,:]) | (z[-1,:] > 500)), z_nom, z_new)
+
+    # detangle interfaces by pushing them upwards from below (i.e. isopycnal overrides)
+    if detangle:
+        for k in range(z_nom_s.shape[0] - 2, 0, -1):
+            z_bnd_s[k,:] = np.minimum(z_bnd_s[k,:], z_bnd_s[k+1,:])
+
 
     # also bound by total depth
-    z_bnd_s = np.minimum(z_bnd_s, z[[-1],:])
+    z_bnd_s = np.minimum(z_bnd_s, z[-1,:])
 
     # also also bound by maximum depth and thickness
     z_bnd_s[1:-1,:] = np.minimum(z_bnd_s[1:-1,:], max_int_depth[1:-1,np.newaxis],
