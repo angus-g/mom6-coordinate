@@ -215,20 +215,27 @@ def hycom(h, sa, ct, targ_dens, dz_75, max_int_depth, max_lay_thick):
     # adjust nominal positions (transition pressure) based on salinity
     # scale by difference from some middle salinity
     z_nom_s = z_nom.copy()
-    s_range = 2.0
-    s0 = 34.8
-    z_nom_s[1:,:] *= np.clip(1.0 - (sa - s0) / s_range, 0.2, 1.2)
+    s_range = 0.5
+    s0 = 35.0
+    z_nom_s[1:,:] *= np.clip(1.0 - (sa - s0) / s_range, 0.5, 1.0)
 
     # enforce minimum dz
     for k in range(1, z_nom_s.shape[0] - 1):
         z_nom_s[k,:] = np.maximum(z_nom_s[k,:], z_nom_s[k-1,:] + 2)
 
-    z_bnd_s = np.maximum(z_new, z_nom_s)
+    # actual transition to nominal depth
+    #z_bnd_s = np.maximum(z_new, z_nom_s)
+
+    # alternate transition:
+    # use non-modified positions for z when interface is too shallow
+    # (we just want to be isopycnal for longer)
+    z_bnd_s = np.where(z_new < z_nom_s, z_nom, z_new)
+
     # also bound by total depth
     z_bnd_s = np.minimum(z_bnd_s, z[[-1],:])
 
     # also also bound by maximum depth and thickness
     z_bnd_s[1:-1,:] = np.minimum(z_bnd_s[1:-1,:], max_int_depth[1:-1,np.newaxis],
-                               z_bnd_s[:-2,:] + max_lay_thick[:-1,np.newaxis])
+                                 z_bnd_s[:-2,:] + max_lay_thick[:-1,np.newaxis])
 
     return z_new, z_bnd, z_bnd_s
